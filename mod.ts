@@ -1,6 +1,7 @@
 export {
   addTransformations,
   extract,
+  extractFromBytes,
   extractFromHtml,
   removeTransformations,
 } from "./src/main.ts";

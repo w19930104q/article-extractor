@@ -45,6 +45,7 @@ console.log(data);
 
 - [`extract()`](#extract)
 - [`extractFromHtml()`](#extractfromhtml)
+- [`extractFromBytes()`](#extractfrombytes)
 - [Transformations](#transformations)
   - [`Transformation` object](#transformation-object)
   - [`addTransformations()`](#addtransformationstransformation--transformation)
@@ -226,6 +227,76 @@ HTML string containing the article.
 ##### `url` *optional*
 
 Source URL for resolving relative links.
+
+##### `parserOptions` *optional*
+
+See [parserOptions](#parseroptions-optional) above.
+
+---
+
+### `extractFromBytes()`
+
+Decode raw HTML bytes and extract article data from them. This is the same
+pipeline `extract()` uses internally for URL inputs, exposed directly so
+callers that already hold the response bytes (and its `Content-Type` header)
+can avoid any premature string decoding.
+
+#### Syntax
+
+```ts
+extractFromBytes(bytes: Uint8Array | ArrayBuffer): Promise<ArticleData | null>
+extractFromBytes(bytes: Uint8Array | ArrayBuffer, url?: string): Promise<ArticleData | null>
+extractFromBytes(bytes: Uint8Array | ArrayBuffer, url?: string, contentType?: string | null): Promise<ArticleData | null>
+extractFromBytes(bytes: Uint8Array | ArrayBuffer, url?: string, contentType?: string | null, parserOptions?: ParserOptions): Promise<ArticleData | null>
+```
+
+Example:
+
+```ts
+import { extractFromBytes } from "jsr:@extractus/article-extractor";
+
+const res = await fetch(url);
+const bytes = new Uint8Array(await res.arrayBuffer());
+
+const article = await extractFromBytes(
+  bytes,
+  url,
+  res.headers.get("content-type"),
+);
+```
+
+The encoding is resolved directly from the raw bytes, before any DOM parsing,
+in this order:
+
+1. UTF-8 / UTF-16 byte order mark (BOM)
+2. Valid `charset` parameter of the `Content-Type` header
+3. First valid `<meta>` charset declaration inside the leading 1024 bytes
+   (both `<meta charset>` and `<meta http-equiv="content-type">`, any
+   case/quote/attribute order)
+4. UTF-8
+
+Pseudo-declarations inside comments or `<script>` elements are ignored, and
+declarations starting at/after the 1024-byte boundary do not participate.
+The BOM is always stripped, invalid byte sequences become the Unicode
+replacement character (U+FFFD), and the returned structure and extraction
+strategy are identical to the string entry points. Passing an HTML string
+to `extract()` or `extractFromHtml()` never triggers re-decoding, because a
+JavaScript string has no byte-level encoding.
+
+#### Parameters
+
+##### `bytes` *required*
+
+Raw HTML response bytes as a `Uint8Array` or `ArrayBuffer`.
+
+##### `url` *optional*
+
+Source URL for resolving relative links.
+
+##### `contentType` *optional*
+
+The final response's `Content-Type` header value (including any `charset`
+parameter).
 
 ##### `parserOptions` *optional*
 

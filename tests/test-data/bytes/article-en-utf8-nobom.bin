@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Byte Decoding Equivalence Article</title>
+<link rel="canonical" href="https://example.com/path/to/article">
+<meta property="og:title" content="Byte Decoding Equivalence Article">
+</head>
+<body>
+<main>
+<article>
+<h1>Byte Decoding Equivalence Article</h1>
+<p>This plain English article exists to prove that extracting from raw bytes and from an already decoded HTML string yields exactly the same article data structure.</p>
+<p>The quick brown fox jumps over the lazy dog while a careful engineer watches every byte travel through the decoder pipeline without any silent reinterpretation.</p>
+<p>Relative links, metadata, publication hints and readability heuristics must all behave identically regardless of which public entry point the caller chooses.</p>
+<p>Padding text follows so the content comfortably exceeds the minimum length threshold enforced by the extraction pipeline in every supported configuration.</p>
+<p>A final paragraph closes the fixture with a reproducible sentence used by the equivalence test suite across both supported extraction entry points.</p>
+
+</article>
+</main>
+</body>
+</html>

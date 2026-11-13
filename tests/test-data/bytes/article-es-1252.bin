@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="windows-1252">
+<title>Título en español — ¿cómo está la codificación?</title>
+<link rel="canonical" href="https://example.com/path/to/article">
+<meta property="og:title" content="Título en español — ¿cómo está la codificación?">
+</head>
+<body>
+<main>
+<article>
+<h1>Título en español — ¿cómo está la codificación?</h1>
+<p>Este es un artículo de prueba en español para verificar la detección de la codificación de caracteres de páginas web occidentales.</p>
+<p>El niño se asomó al balcón y vio una piñata llena de caramelos: ¡qué alegría tan enorme sintió en aquel momento del día!</p>
+<p>Los caminos medievales atraviesan viñedos y pueblos antiguos; al atardecer, el viento trae aromas de café recién molido.</p>
+<p>El precio del viaje fue de 100 € por persona, incluyendo alojamiento, desayuno tipo bufé y una visita guiada por la ciudad.</p>
+<p>Cómo, dónde y cuándo se declara el juego de caracteres importa mucho: una cabecera HTTP válida siempre gana sobre una etiqueta meta.</p>
+
+</article>
+</main>
+</body>
+</html>

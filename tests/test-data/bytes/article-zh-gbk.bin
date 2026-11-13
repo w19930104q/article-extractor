@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="gbk">
+<title>中文文章标题：编码检测测试</title>
+<link rel="canonical" href="https://example.com/path/to/article">
+<meta property="og:title" content="中文文章标题：编码检测测试">
+<meta name="description" content="这是一篇用于测试字符编码自动检测的中文文章。">
+</head>
+<body>
+<main>
+<article>
+<h1>中文文章标题：编码检测测试</h1>
+<p>这是一篇用于测试字符编码自动检测能力的中文文章，正文包含足够多的汉字以便通过可读性提取器的内容长度阈值。</p>
+<p>春天来了，花园里的花朵竞相开放，蜜蜂在花丛中辛勤地采蜜，孩子们在草地上快乐地奔跑嬉戏。</p>
+<p>科学技术的发展日新月异，人工智能正在改变人们的生活方式，也对软件工程师提出了新的要求与挑战。</p>
+<p>从古老的象形文字到今天统一的字符编码标准，人类记录信息的方式经历了漫长而曲折的演进过程。</p>
+<p>我们希望提取器能够正确识别页面声明的字符集，把原始字节忠实地还原为可读的多语言文本内容。</p>
+
+</article>
+</main>
+</body>
+</html>

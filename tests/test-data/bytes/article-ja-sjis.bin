@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=Shift_JIS">
+<title>日本語記事タイトル：文字コード判定テスト</title>
+<link rel="canonical" href="https://example.com/path/to/article">
+<meta property="og:title" content="日本語記事タイトル：文字コード判定テスト">
+</head>
+<body>
+<main>
+<article>
+<h1>日本語記事タイトル：文字コード判定テスト</h1>
+<p>これは文字コードの自動判定機能を検証するための日本語の記事であり、本文には十分な長さの文章を用意してあります。</p>
+<p>春が来て、庭の花が一斉に咲き始め、蜂たちは花の間を忙しく飛び回り、子供たちは芝生の上で楽しそうに走り回る。</p>
+<p>技術の進歩は日進月歩であり、人工知能は人々の暮らしを変えつつあり、開発者には新しい知識が求められている。</p>
+<p>古代の象形文字から現代の文字コード規格まで、情報を記録する方法は長い時間をかけて進化してきた。</p>
+<p>抽出器がページの文字セットを正しく認識し、生のバイト列を読みやすい多言語テキストへ復元できることを願っている。</p>
+
+</article>
+</main>
+</body>
+</html>
