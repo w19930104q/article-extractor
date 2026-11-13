@@ -104,13 +104,35 @@ export const purify = (url: string): string | null => {
   }
 };
 
-export const normalize = (html: string, url: string): string => {
+/**
+ * Resolve every relative link/image/source reference against `baseUrl`.
+ *
+ * A document-declared `<base href>` is itself resolved against `baseUrl`
+ * (which must be the final URL of the response) before it participates in
+ * resolving anything else. The canonical link never changes this base.
+ */
+export const normalize = (html: string, baseUrl: string): string => {
   const doc = new DOMParser().parseFromString(html, "text/html");
+
+  let documentBase = baseUrl;
+  const baseTag = doc.querySelector("base[href]");
+  if (baseTag) {
+    const href = baseTag.getAttribute("href");
+    if (href) {
+      const resolved = absolutify(baseUrl, href);
+      if (resolved) {
+        documentBase = resolved;
+      }
+    }
+    // Keep the parsing base single-sourced: the document's own <base>
+    // would otherwise re-apply on top of the absolute URLs we write.
+    baseTag.parentNode?.removeChild(baseTag);
+  }
 
   Array.from(doc.getElementsByTagName("a")).forEach((element) => {
     const href = element.getAttribute("href");
     if (href) {
-      element.setAttribute("href", absolutify(url, href));
+      element.setAttribute("href", absolutify(documentBase, href));
       element.setAttribute("target", "_blank");
     }
   });
@@ -118,14 +140,14 @@ export const normalize = (html: string, url: string): string => {
   Array.from(doc.getElementsByTagName("img")).forEach((element) => {
     const src = element.getAttribute("data-src") ?? element.getAttribute("src");
     if (src) {
-      element.setAttribute("src", absolutify(url, src));
+      element.setAttribute("src", absolutify(documentBase, src));
     }
   });
 
   Array.from(doc.getElementsByTagName("source")).forEach((element) => {
     const src = element.getAttribute("src");
     if (src) {
-      element.setAttribute("src", absolutify(url, src));
+      element.setAttribute("src", absolutify(documentBase, src));
     }
   });
 

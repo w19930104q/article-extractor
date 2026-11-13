@@ -19,20 +19,6 @@ const cleanWhitespace = (str: string): string =>
 export const isHTML = (value: string): boolean =>
   /<\/?[a-z][^>]*>/i.test(value);
 
-export const getCharset = (html: string): string => {
-  const doc = new DOMParser().parseFromString(html, "text/html");
-  const m = doc.querySelector("meta[charset]") || null;
-  let charset = m ? m.getAttribute("charset") : "";
-  if (!charset) {
-    const h = doc.querySelector('meta[http-equiv="content-type"]') || null;
-    charset = h
-      ? h.getAttribute("content")?.split(";")[1]?.replace("charset=", "")
-        ?.trim()
-      : "";
-  }
-  return charset?.toLowerCase() || "utf8";
-};
-
 export const cleanify = (
   inputHtml: string,
   options: SanitizeOptions,

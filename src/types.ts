@@ -29,6 +29,13 @@ export type ParserOptions = {
   allowedAttributes?: Record<string, string[]>;
   /** Allowed domains for iframe src. Default: youtube, vimeo, etc. */
   allowedIframeDomains?: string[];
+  /**
+   * Maximum number of bytes accepted from a response body. The body is
+   * streamed and counted chunk by chunk; once the limit is exceeded the
+   * body is cancelled immediately and extraction fails with an error
+   * (a partial article is never returned). Omit or set to 0 for no limit.
+   */
+  maxResponseBytes?: number;
 };
 
 /** Extracted article data structure. */

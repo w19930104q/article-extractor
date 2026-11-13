@@ -53,6 +53,14 @@ export default async (
   inputHtml: string,
   inputUrl = "",
   parserOptions: ParserOptions = {},
+  /**
+   * URL used as the base for resolving relative links, images and the
+   * document-declared `<base href>`. For URL input this is the response's
+   * final URL. When empty (pure HTML entry point), resolution falls back to
+   * the best (canonical) URL discovered inside the document, preserving the
+   * historical behavior.
+   */
+  baseUrl = "",
 ): Promise<ArticleData | null> => {
   const meta = extractMetaData(inputHtml);
 
@@ -93,11 +101,16 @@ export default async (
 
   const bestUrl = chooseBestUrl(links, title);
 
-  const normalizedHtml = normalizeUrls(inputHtml, bestUrl);
+  // Resource resolution is anchored to the response's final URL; the
+  // canonical/best URL only identifies the article. For the pure HTML
+  // entry point no response URL exists, so keep the legacy behavior and
+  // resolve against the best (canonical) URL discovered in the document.
+  const effectiveBase = baseUrl || bestUrl;
+  const normalizedHtml = normalizeUrls(inputHtml, effectiveBase);
   const preTransformedHtml = execPreParser(normalizedHtml, links);
   const readabilityExtracted = extractWithReadability(
     preTransformedHtml,
-    bestUrl,
+    effectiveBase,
   );
 
   if (!readabilityExtracted) {
@@ -132,8 +145,8 @@ export default async (
     maxlen: descriptionTruncateLen,
   });
 
-  const image = metaImg ? absolutifyUrl(bestUrl, metaImg) : "";
-  const favicon = metaFav ? absolutifyUrl(bestUrl, metaFav) : "";
+  const image = metaImg ? absolutifyUrl(effectiveBase, metaImg) : "";
+  const favicon = metaFav ? absolutifyUrl(effectiveBase, metaFav) : "";
 
   const imgcount = countImages(content);
 

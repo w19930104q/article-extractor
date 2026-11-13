@@ -2,13 +2,20 @@
 
 import retrieve from "./utils/retrieve.ts";
 import parseFromHtml from "./utils/parseFromHtml.ts";
-import { getCharset, isHTML } from "./utils/html.ts";
+import { isHTML } from "./utils/html.ts";
+import { resolveCharset } from "./utils/charset.ts";
 import { isValid as isValidUrl } from "./utils/linker.ts";
 
 import type { ArticleData, Fetcher, ParserOptions } from "./types.ts";
 
 /**
  * Load and extract article data from a URL or HTML string.
+ *
+ * When given a URL, the response body is streamed as raw bytes and decoded
+ * using the encoding determined from the actual response (BOM, HTTP
+ * charset, in-document meta declaration within the first 1024 bytes, then
+ * UTF-8). Relative links and images are resolved against the final
+ * response URL.
  *
  * @param input - URL or HTML string to extract from
  * @param parserOptions - Options for parsing
@@ -30,19 +37,35 @@ export const extract = async (
     throw new Error("Input must be a URL or raw HTML");
   }
 
+  // Pure HTML entry: the caller already decoded the text. Do not
+  // re-detect/re-decode, and keep the original cleaning/link behavior
+  // (resources resolve against the best URL found in the document).
   if (inputType === "html") {
-    return parseFromHtml(input, "", parserOptions);
+    return parseFromHtml(input, "", parserOptions, "");
   }
 
-  const buffer = await retrieve(input, fetcher);
-  const text = buffer ? new TextDecoder().decode(buffer).trim() : "";
-  if (!text) {
+  const { maxResponseBytes } = parserOptions;
+  const { bytes, finalUrl, contentType } = await retrieve(input, fetcher, {
+    maxResponseBytes,
+  });
+
+  if (!bytes.length) {
     return null;
   }
-  const charset = getCharset(text);
-  const decoder = new TextDecoder(charset);
-  const html = decoder.decode(buffer);
-  return parseFromHtml(html, input, parserOptions);
+
+  // Determine the encoding from the actual response — never decode the
+  // whole payload as UTF-8 first.
+  const { label } = resolveCharset({ bytes, contentType });
+  const html = new TextDecoder(label).decode(bytes);
+  if (!html.trim()) {
+    return null;
+  }
+
+  // The final URL (post-redirect) is the resource resolution base. When a
+  // custom fetcher does not expose a final URL, retrieve falls back to the
+  // input URL. The canonical link still identifies the article inside
+  // parseFromHtml but never changes this base.
+  return parseFromHtml(html, input, parserOptions, finalUrl);
 };
 
 /**

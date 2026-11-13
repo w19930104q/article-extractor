@@ -115,13 +115,53 @@ URL string or raw HTML content.
 | `allowedTags` | `string[]` | *(semantic/content tags)* | HTML tags to keep in output |
 | `allowedAttributes` | `Record<string, string[]>` | *(src, href, alt, etc.)* | Per-tag attributes to keep |
 | `allowedIframeDomains` | `string[]` | *(youtube, vimeo, etc.)* | Allowed domains for iframe src |
+| `maxResponseBytes` | `number` | *(no limit)* | Max response body bytes; the streamed body is cancelled and extraction fails once exceeded, never returning a partial article. Use `0` or omit for no limit |
 
 ```ts
 const article = await extract(url, {
   descriptionLengthThreshold: 120,
   contentLengthThreshold: 500,
+  // reject bodies larger than 5 MiB while they are being downloaded
+  maxResponseBytes: 5 * 1024 * 1024,
 });
 ```
+
+#### Response encoding
+
+When the input is a URL, the body is read as raw bytes and **never** decoded
+as UTF-8 upfront. The encoding is determined from the actual response, in this
+priority order:
+
+1. The byte order mark (BOM) at the start of the body (UTF-8, UTF-16 LE/BE)
+2. The `charset` parameter of the HTTP `Content-Type` header
+3. A charset declaration inside the first 1024 bytes of the body
+   (`<meta charset>`, `<meta http-equiv="Content-Type">`, or an XML
+   declaration) — common aliases such as `gbk`/`gb2312` → GB18030 or
+   `utf8` → UTF-8 are recognized
+4. UTF-8 fallback
+
+An explicit but unknown/unsupported declaration (from the header or meta)
+raises an explicit `Unsupported charset declaration: "..."` error instead of
+silently falling back. The pure-HTML entry points (`extract(html)` and
+`extractFromHtml`) receive an already decoded string, so they perform no
+encoding detection or re-decoding.
+
+#### Response size limit
+
+`maxResponseBytes` is enforced while streaming: bytes are counted on every
+incoming chunk. As soon as the running total exceeds the limit, the body
+stream is cancelled (releasing the connection/socket) and `extract()` rejects
+with `Response body exceeds the limit of N bytes`. A body whose size is
+exactly equal to the limit is accepted. There is no default cap.
+
+#### Link resolution base
+
+Relative links, images and a document-declared relative `<base href>` are
+resolved against the **final response URL** (the URL after redirects, exposed
+as `response.url`). If a custom fetcher returns a response without a final
+URL, the input URL is used instead. The canonical/shortlink/AMP links still
+identify the article (see `url` and `links` in the result) but never change
+the resource resolution base.
 
 ##### `fetcher` *optional*
 
