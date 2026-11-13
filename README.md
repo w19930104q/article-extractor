@@ -51,6 +51,7 @@ console.log(data);
   - [`removeTransformations()`](#removetransformationspatterns-regexp)
   - [Priority order](#priority-order)
 - [Content sanitization options](#content-sanitization-options)
+- [JSON-LD article extraction](#json-ld-article-extraction)
 
 ---
 
@@ -115,6 +116,7 @@ URL string or raw HTML content.
 | `allowedTags` | `string[]` | *(semantic/content tags)* | HTML tags to keep in output |
 | `allowedAttributes` | `Record<string, string[]>` | *(src, href, alt, etc.)* | Per-tag attributes to keep |
 | `allowedIframeDomains` | `string[]` | *(youtube, vimeo, etc.)* | Allowed domains for iframe src |
+| `useJsonLd` | `boolean` | `false` | Prefer JSON-LD `Article`/`NewsArticle` nodes for headline, author, image and `datePublished` |
 
 ```ts
 const article = await extract(url, {
@@ -344,6 +346,46 @@ const article = await extract(url, {
 ```
 
 To see the full defaults, refer to [`src/config.ts`](src/config.ts).
+
+---
+
+### JSON-LD article extraction
+
+Set `useJsonLd: true` in `parserOptions` to supplement HTML meta data with
+[JSON-LD](https://json-ld.org/) `Article` / `NewsArticle` nodes found in
+`<script type="application/ld+json">` blocks. Both `extract()` and
+`extractFromHtml()` accept the option:
+
+```ts
+const article = await extract(url, { useJsonLd: true });
+// or
+const article = await extractFromHtml(html, url, { useJsonLd: true });
+```
+
+How it works:
+
+- Every JSON-LD block is read, including top-level arrays and `@graph`
+  containers; nodes in different blocks can reference each other via `@id`.
+- Only nodes whose `@type` is `Article` or `NewsArticle` (case-insensitive,
+  including array `@type`) are candidates.
+- `@id` references are resolved against the page URL — the final HTTP URL
+  after redirects for `extract()`, or the `url` argument passed to
+  `extractFromHtml()`. Duplicate `@id` definitions keep the first node;
+  circular or dangling references simply leave that field absent.
+- The article is selected by, in order: a `mainEntityOfPage` matching the
+  page URL, a `url` matching the page URL, then the first candidate in
+  document order.
+- From the selected article, `headline`, `author`, `image` and
+  `datePublished` take priority over the HTML meta equivalents. Author and
+  image arrays use their first item; the author uses `name`; the image uses
+  `contentUrl` and falls back to `url`.
+- A field missing from JSON-LD still falls back to the HTML meta data; one
+  article's fields are never filled from another article. With no
+  `Article`/`NewsArticle` candidate, extraction behaves exactly as before.
+
+The default (`useJsonLd` omitted or `false`) and the article body
+(`content`) extraction are unchanged. Remote `@context` documents are never
+fetched.
 
 ---
 

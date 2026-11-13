@@ -29,6 +29,12 @@ export type ParserOptions = {
   allowedAttributes?: Record<string, string[]>;
   /** Allowed domains for iframe src. Default: youtube, vimeo, etc. */
   allowedIframeDomains?: string[];
+  /**
+   * Use JSON-LD (`application/ld+json`) Article/NewsArticle nodes as the
+   * preferred source for headline, author, image and datePublished.
+   * Default: `false` (HTML meta extraction keeps its existing behavior).
+   */
+  useJsonLd?: boolean;
 };
 
 /** Extracted article data structure. */

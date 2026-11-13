@@ -34,7 +34,7 @@ export const extract = async (
     return parseFromHtml(input, "", parserOptions);
   }
 
-  const buffer = await retrieve(input, fetcher);
+  const { buffer, url: finalUrl } = await retrieve(input, fetcher);
   const text = buffer ? new TextDecoder().decode(buffer).trim() : "";
   if (!text) {
     return null;
@@ -42,7 +42,7 @@ export const extract = async (
   const charset = getCharset(text);
   const decoder = new TextDecoder(charset);
   const html = decoder.decode(buffer);
-  return parseFromHtml(html, input, parserOptions);
+  return parseFromHtml(html, input, parserOptions, finalUrl);
 };
 
 /**

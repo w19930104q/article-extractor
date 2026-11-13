@@ -1,6 +1,7 @@
 // utils -> parseFromHtml.ts
 
 import { getTTR, stripTags, truncateByChar, unique } from "@pwshub/bellajs";
+import { DOMParser } from "linkedom";
 
 import { cleanify, countImages } from "./html.ts";
 
@@ -14,6 +15,9 @@ import {
 } from "./linker.ts";
 
 import extractMetaData from "./extractMetaData.ts";
+
+import extractArticleLd from "./extractArticleLd.ts";
+import type { ArticleLdData } from "./extractArticleLd.ts";
 
 import extractWithReadability from "./extractWithReadability.ts";
 
@@ -53,10 +57,20 @@ export default async (
   inputHtml: string,
   inputUrl = "",
   parserOptions: ParserOptions = {},
+  pageUrl = "",
 ): Promise<ArticleData | null> => {
   const meta = extractMetaData(inputHtml);
 
-  let title = meta.title;
+  const {
+    wordsPerMinute = 300,
+    descriptionTruncateLen = 210,
+    descriptionLengthThreshold = 180,
+    contentLengthThreshold = 200,
+    allowedTags = defaultAllowedTags,
+    allowedAttributes = defaultAllowedAttributes,
+    allowedIframeDomains = defaultAllowedIframeDomains,
+    useJsonLd = false,
+  } = parserOptions;
 
   const {
     url,
@@ -71,15 +85,16 @@ export default async (
     type,
   } = meta;
 
-  const {
-    wordsPerMinute = 300,
-    descriptionTruncateLen = 210,
-    descriptionLengthThreshold = 180,
-    contentLengthThreshold = 200,
-    allowedTags = defaultAllowedTags,
-    allowedAttributes = defaultAllowedAttributes,
-    allowedIframeDomains = defaultAllowedIframeDomains,
-  } = parserOptions;
+  // Opt-in JSON-LD Article/NewsArticle extraction. Only the fields present
+  // on the selected JSON-LD article override the HTML meta values; missing
+  // fields keep falling back to the meta data below.
+  let ldData: ArticleLdData = {};
+  if (useJsonLd) {
+    const doc = new DOMParser().parseFromString(inputHtml, "text/html");
+    ldData = extractArticleLd(doc as unknown as Document, pageUrl || inputUrl);
+  }
+
+  let title = ldData.title || meta.title;
 
   const links = unique(
     [url, shortlink, amphtml, canonical, inputUrl]
@@ -132,7 +147,9 @@ export default async (
     maxlen: descriptionTruncateLen,
   });
 
-  const image = metaImg ? absolutifyUrl(bestUrl, metaImg) : "";
+  const image = (ldData.image || metaImg)
+    ? absolutifyUrl(bestUrl, ldData.image || metaImg)
+    : "";
   const favicon = metaFav ? absolutifyUrl(bestUrl, metaFav) : "";
 
   const imgcount = countImages(content);
@@ -144,10 +161,12 @@ export default async (
     links,
     image,
     content,
-    author: author || readabilityExtracted.byline || "",
+    author: ldData.author || author || readabilityExtracted.byline || "",
     favicon,
     source: readabilityExtracted.siteName || getDomain(bestUrl),
-    published: fmtIso(readabilityExtracted.publishedTime || published),
+    published: fmtIso(
+      ldData.published || readabilityExtracted.publishedTime || published,
+    ),
     ttr: getTTR(textContent, imgcount, wordsPerMinute),
     type,
   };

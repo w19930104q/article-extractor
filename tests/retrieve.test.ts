@@ -17,9 +17,10 @@ Deno.test("retrieve - bad status code", async () => {
 Deno.test("retrieve - good source", async () => {
   const url = "https://some.where/good/page";
   const fetcher = createMockFetcher("<div>this is content</div>", "text/html");
-  const buffer = await retrieve(url, fetcher);
+  const { buffer, url: finalUrl } = await retrieve(url, fetcher);
   const html = new TextDecoder().decode(buffer);
   assertEquals(html, "<div>this is content</div>");
+  assertEquals(finalUrl, url);
 });
 
 Deno.test("retrieve - good source with \\r\\n", async () => {
@@ -28,7 +29,7 @@ Deno.test("retrieve - good source with \\r\\n", async () => {
     "\n\r\r\n\n<div>this is content</div>\n\r\r\n\n",
     "text/html",
   );
-  const buffer = await retrieve(url, fetcher);
+  const { buffer } = await retrieve(url, fetcher);
   const html = new TextDecoder().decode(buffer).trim();
   assertEquals(html, "<div>this is content</div>");
 });
@@ -43,7 +44,22 @@ Deno.test("retrieve - custom fetcher", async () => {
     assertEquals(fetchUrl, url);
     return innerFetcher();
   };
-  const buffer = await retrieve(url, myFetcher);
+  const { buffer } = await retrieve(url, myFetcher);
   const html = new TextDecoder().decode(buffer);
   assertEquals(html, "<div>this is content</div>");
+});
+
+Deno.test("retrieve - exposes final url after redirect", async () => {
+  const url = "https://some.where/old/page";
+  const finalUrl = "https://some.where/new/page";
+  const fetcher = () => {
+    const res = new Response("<div>this is content</div>", {
+      status: 200,
+      headers: { "content-type": "text/html" },
+    });
+    Object.defineProperty(res, "url", { value: finalUrl });
+    return Promise.resolve(res);
+  };
+  const result = await retrieve(url, fetcher);
+  assertEquals(result.url, finalUrl);
 });
